@@ -91,22 +91,10 @@ def acMain(ac_version):
     best_time_label = ac.addLabel(app_window, texts[language]["best_time"] + ": 00:00.000")
     ac.setPosition(best_time_label, 10, 210)
 
-    # Récupérer et afficher le nom du circuit et le layout au démarrage
-    track_name = ac.getTrackName()
-    track_layout = ac.getTrackConfiguration()
-    ac.setText(track_label, texts[language]["track"] + ": " + track_name)
-    ac.setText(layout_label, texts[language]["layout"] + ": " + track_layout)
-
-    # Déterminer le nom de fichier pour enregistrer le meilleur temps
-    best_time_file = "apps/python/LiveLapInfo/{}_{}.txt".format(track_name, track_layout)
-
-    # Charger le meilleur temps depuis le fichier correspondant
-    load_best_time()
-
     return texts[language]["app_name"]
 
 def acUpdate(deltaT):
-    global chrono_label, lap_label, validity_label, diff_label, reference_time, best_time, best_time_label
+    global chrono_label, lap_label, validity_label, diff_label, reference_time, best_time, best_time_label, track_label, layout_label, best_time_file
 
     # Récupérer le numéro du tour en cours
     current_lap = ac.getCarState(0, acsys.CS.LapCount)
@@ -152,6 +140,20 @@ def acUpdate(deltaT):
         best_time = lap_time
         save_best_time(lap_time)
         ac.setText(best_time_label, texts[language]["best_time"] + ": " + time_str)
+
+    # Récupérer et afficher le nom du circuit et la configuration une fois disponibles
+    track_name = ac.getTrackName()
+    track_layout = ac.getTrackConfiguration()
+    if track_name != "":
+        ac.setText(track_label, texts[language]["track"] + ": " + track_name)
+    if track_layout != "":
+        ac.setText(layout_label, texts[language]["layout"] + ": " + track_layout)
+
+    # Déterminer le nom de fichier pour enregistrer le meilleur temps
+    best_time_file = "apps/python/LiveLapInfo/{}_{}.txt".format(track_name, track_layout)
+
+    # Charger le meilleur temps depuis le fichier correspondant
+    load_best_time()
 
 def convert_time_str_to_ms(time_str):
     """Convertir un temps au format m:ss:cc en millisecondes"""
