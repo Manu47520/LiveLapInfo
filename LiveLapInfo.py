@@ -51,6 +51,11 @@ def acMain(ac_version):
     # Créer une application dans Assetto Corsa
     app_window = ac.newApp(texts[language]["app_name"])
     ac.setSize(app_window, 300, 400)
+	
+	# Définir l'icône pour l'application
+    ac.setIconPosition(app_window, 0, 0)
+    ac.setTitle(app_window, "")
+    ac.setIcon(app_window, "apps/python/LiveLapInfo/img/LiveLapInfo.png")
     
     # Ajouter les labels pour afficher les informations
     track_label = ac.addLabel(app_window, texts[language]["track"] + ": Loading...")
