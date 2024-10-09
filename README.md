@@ -19,6 +19,7 @@ Read:
 - reach time for each track and layout
 
 version: 0.1
-its a beta version untested.
+09/10/24: many bug, only real time ok.
+08/10/24: its a beta version untested.
 
 Manu47520.
