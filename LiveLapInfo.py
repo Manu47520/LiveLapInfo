@@ -15,6 +15,7 @@ best_time_label = None
 best_time_file = None
 best_time = None  # Meilleur temps en millisecondes
 language = "en"  # Langue par défaut
+language_dropdown = None
 
 # Textes en français et en anglais
 texts = {
@@ -45,16 +46,11 @@ texts = {
 }
 
 def acMain(ac_version):
-    global chrono_label, lap_label, validity_label, track_label, layout_label, reference_time_input, diff_label, best_time_label, best_time_file, language
-
-    # Détecter la langue du jeu
-    language = ac.getGameLanguage()
-    if language not in texts:
-        language = "en"  # Par défaut en anglais si la langue n'est pas supportée
+    global chrono_label, lap_label, validity_label, track_label, layout_label, reference_time_input, diff_label, best_time_label, best_time_file, language, language_dropdown
 
     # Créer une application dans Assetto Corsa
     app_window = ac.newApp(texts[language]["app_name"])
-    ac.setSize(app_window, 300, 350)
+    ac.setSize(app_window, 300, 400)
     
     # Ajouter les labels pour afficher les informations
     track_label = ac.addLabel(app_window, texts[language]["track"] + ": Loading...")
@@ -91,6 +87,12 @@ def acMain(ac_version):
     best_time_label = ac.addLabel(app_window, texts[language]["best_time"] + ": 00:00.000")
     ac.setPosition(best_time_label, 10, 210)
 
+    # Ajouter une liste déroulante pour sélectionner la langue (Anglais ou Français)
+    language_dropdown = ac.addComboBox(app_window, onLanguageChange)
+    ac.addItem(language_dropdown, "English")
+    ac.addItem(language_dropdown, "Français")
+    ac.setPosition(language_dropdown, 10, 250)
+    
     return texts[language]["app_name"]
 
 def acUpdate(deltaT):
@@ -123,8 +125,11 @@ def acUpdate(deltaT):
     ref_time_str = ac.getText(reference_time_input)
     reference_time = convert_time_str_to_ms(ref_time_str)
 
-    # Sauvegarder le temps de référence dans un fichier
-    save_reference_time(ref_time_str)
+    # Sauvegarder le temps de référence dans un fichier spécifique au circuit et layout
+    track_name = ac.getTrackName()
+    track_layout = ac.getTrackConfiguration()
+    reference_time_file = "apps/python/LiveLapInfo/{}_{}_record.txt".format(track_name, track_layout)
+    save_reference_time(reference_time_file, ref_time_str)
 
     # Comparer le temps de référence avec le tour en cours
     diff = lap_time - reference_time
@@ -142,8 +147,6 @@ def acUpdate(deltaT):
         ac.setText(best_time_label, texts[language]["best_time"] + ": " + time_str)
 
     # Récupérer et afficher le nom du circuit et la configuration une fois disponibles
-    track_name = ac.getTrackName()
-    track_layout = ac.getTrackConfiguration()
     if track_name != "":
         ac.setText(track_label, texts[language]["track"] + ": " + track_name)
     if track_layout != "":
@@ -155,6 +158,23 @@ def acUpdate(deltaT):
     # Charger le meilleur temps depuis le fichier correspondant
     load_best_time()
 
+def onLanguageChange(index):
+    """Changer la langue selon l'option sélectionnée par l'utilisateur"""
+    global language
+    if index == 0:
+        language = "en"
+    elif index == 1:
+        language = "fr"
+
+    # Mettre à jour les textes des labels après le changement de langue
+    ac.setText(track_label, texts[language]["track"] + ": Loading...")
+    ac.setText(layout_label, texts[language]["layout"] + ": Loading...")
+    ac.setText(chrono_label, texts[language]["chrono"] + ": 00:00.000")
+    ac.setText(lap_label, texts[language]["lap"] + ": 1")
+    ac.setText(validity_label, texts[language]["valid"])
+    ac.setText(diff_label, texts[language]["diff"] + ": 0.00")
+    ac.setText(best_time_label, texts[language]["best_time"] + ": 00:00.000")
+
 def convert_time_str_to_ms(time_str):
     """Convertir un temps au format m:ss:cc en millisecondes"""
     try:
@@ -162,33 +182,36 @@ def convert_time_str_to_ms(time_str):
         minutes = int(minutes)
         seconds = int(seconds)
         centi = int(centi)
-        total_time = (minutes * 60000) + (seconds * 1000) + (centi * 10)
-        return total_time
-    except ValueError:
-        return 0  # Valeur par défaut si l'entrée est invalide
+        return (minutes * 60000) + (seconds * 1000) + (centi * 10)
+    except:
+        return 0
 
-def save_reference_time(time_str):
-    """Sauvegarde le temps de référence dans un fichier texte"""
+def save_reference_time(file_path, time_str):
+    """Sauvegarder le temps de référence dans un fichier"""
     try:
-        with open("apps/python/LiveLapInfo/reference_time.txt", 'w') as file:
+        with open(file_path, 'w') as file:
             file.write(time_str)
     except Exception as e:
         ac.log("Erreur lors de la sauvegarde du temps de référence: " + str(e))
 
 def load_reference_time():
-    """Charge le temps de référence depuis un fichier texte"""
-    if os.path.exists("apps/python/LiveLapInfo/reference_time.txt"):
-        try:
-            with open("apps/python/LiveLapInfo/reference_time.txt", 'r') as file:
+    """Charger le temps de référence depuis le fichier"""
+    try:
+        track_name = ac.getTrackName()
+        track_layout = ac.getTrackConfiguration()
+        file_path = "apps/python/LiveLapInfo/{}_{}_record.txt".format(track_name, track_layout)
+
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as file:
                 return file.readline().strip()
-        except Exception as e:
-            ac.log("Erreur lors du chargement du temps de référence: " + str(e))
-            return "1:30:00"  # Valeur par défaut si erreur
-    else:
-        return "1:30:00"  # Valeur par défaut si fichier non trouvé
+        else:
+            return "00:00:000"
+    except Exception as e:
+        ac.log("Erreur lors du chargement du temps de référence: " + str(e))
+        return "00:00:000"
 
 def save_best_time(lap_time):
-    """Sauvegarde le meilleur temps dans un fichier spécifique au circuit et layout"""
+    """Sauvegarder le meilleur temps dans un fichier"""
     try:
         with open(best_time_file, 'w') as file:
             minutes = int(lap_time // 60000)
@@ -199,7 +222,7 @@ def save_best_time(lap_time):
         ac.log("Erreur lors de la sauvegarde du meilleur temps: " + str(e))
 
 def load_best_time():
-    """Charge le meilleur temps depuis un fichier spécifique au circuit et layout"""
+    """Charger le meilleur temps depuis un fichier spécifique au circuit et layout"""
     global best_time
     if os.path.exists(best_time_file):
         try:
