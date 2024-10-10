@@ -20,7 +20,8 @@ Read:
 
 version: 0.1
 
-09/10/24: many bug, only real time ok.
-08/10/24: its a beta version untested.
+HISTORY
+- 09/10/24: many bug, only real time ok.
+- 08/10/24: its a beta version untested.
 
 Manu47520.
