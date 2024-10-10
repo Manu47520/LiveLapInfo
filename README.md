@@ -4,8 +4,6 @@ It's an application for the game Assetto Corsa that allows you to display the cu
 It also records the pilot's best time and allows you to enter a reference time to achieve.
 A widget display informations on screen.
 
-Language coding: python.
-
 Display:
 - lap number
 - current lap time
